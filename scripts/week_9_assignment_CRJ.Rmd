@@ -1,0 +1,58 @@
+---
+title: "Week 9 Assignment - Chris Jasper’s Master Thesis Goal's"
+author: "Chris Jasper"
+date: "3/11/2019"
+output: html_document
+---
+
+> My master's thesis work is based in the Northern California Delta, where for the last three years I have studied fish communites and water quality trends. I'm am particularly interested in further studying the effects of the North Bay Aqueduct exports on water quality trends and how fish might respond to seasonal changes in pumping rates. **I hypothesize that with reduced pumping rates, water quality will become more favorable for native fish species.** *I do not have a focal species of interest because this is a ecosytem and fish community study.*  Ideally, some of my findings will influence a modified pumping regime that will promote preferable water quality conditions for native fishes in late winter and early spring months.
+
+![Barker Slough and our work boat](/Users/chris/Documents/RProjects/R_Davis_InClass_ChrisJasper/data/BarkerSlough.jpg)
+```{r}
+library(tidyverse)
+glimpse(storms)
+?storms
+storms <- storms
+
+#2 Creating the plotly map
+
+plotly::ggplotly(storms %>%  
+  ggplot()+
+  geom_point(aes(wind, pressure, color = status))
+)
+
+#3 Creating the htmlTable
+
+table <- storms %>%
+  drop_na(ts_diameter, hu_diameter) %>% 
+  group_by(status) %>% 
+  summarise(mean_wind = mean(wind), mean_pressure = mean(pressure), mean_ts = mean(ts_diameter), mean_hu = mean(hu_diameter))
+
+# rounding the columns
+table$mean_wind<- round(table$mean_wind, digits = 2)
+table$mean_pressure <- round(table$mean_pressure, digits = 2)
+table$mean_ts <- round(table$mean_ts, digits = 2)
+table$mean_hu <- round(table$mean_hu, digits=2)
+
+htmlTable::htmlTable(table)
+
+# Bonus, how to do this with a purrr function
+# Modify functions are like map functions, but they always return the data type you give them (vector, dataframe, etc.). modify_if lets you include a conditional statement
+
+storms %>%
+  drop_na(ts_diameter, hu_diameter) %>% 
+  group_by(status) %>% 
+  summarise(mean_wind = mean(wind), mean_pressure = mean(pressure), mean_ts = mean(ts_diameter), mean_hu = mean(hu_diameter)) %>% 
+  modify_if(is.numeric, round, digits = 2) %>% # if a column is numeric, round it to 2 digits
+  htmlTable::htmlTable()
+
+
+
+# CHALLENGE
+
+hurr_len <- storms %>% 
+  filter(status == "hurricane", year >= 2010) %>% 
+  group_by(name, year) %>% 
+  summarise(num_days = diff(range(day)))
+  
+map2_chr(.x = hurr_len$name, .y = hurr_len$num_days, function(x,y) paste("Hurricane", x, "lasted", y, "days"))
